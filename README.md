@@ -24,7 +24,7 @@ git remote add upstream https://github.com/NHNNEXT/2014-02-HTML5-1
 ```
 git branch -a//자신의 아이디/주차 브랜치를 확인
 
-git checkout -b 주차_원격_브랜치명 원격_브랜치명
+git checkout -b 주차_로컬_브랜치명 원격_브랜치명
 ex) git checkout -b 1week remotes/origin/mixed/1week
 ```
 
@@ -40,13 +40,13 @@ git commit -m "메세지" // 커밋
 
 ### 5. 본인 원격 저장소에 올리기
 ```
-git push origin 로컬_저장소명:리모트_저장소명
+git push origin 주차_로컬_브랜치명:원격_브랜치명
 ex) git push origin 1week:mixed/1week
 ```
 
 ### 6. 교수한데 pull request
 ```
-git push upstream 로컬_저장소명:리모트_저장소명
+git push upstream 로컬_브랜치명:원격_브랜치명
 ex) git push upstream 1week:mixed/1week
 ```
 

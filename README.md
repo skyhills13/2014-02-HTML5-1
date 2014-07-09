@@ -20,7 +20,7 @@ cd 2014-02-HTML5-1
 git remote add upstream https://github.com/NHNNEXT/2014-02-HTML5-1
 ```
 
-### 3. 본인에 아이디/주차에 맞는 branch로 checkout
+### 3. 본인에 아이디/주차에 맞는 브랜치로 checkout
 ```
 git branch -a//자신의 아이디/주차 브랜치를 확인
 

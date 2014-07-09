@@ -109,6 +109,15 @@ input[type="checkbox"] {
 	border-top-left-radius: 1px;
 	border-top-right-radius: 1px;
 }
+#header.offline:before {
+	border-bottom: 1px solid red;
+	background: red;
+	background: -webkit-gradient(linear, left top, left bottom, from(rgba(255, 0, 0, 0.8)),to(rgba(255, 0, 0, 0.3)));
+	background: -webkit-linear-gradient(top, rgba(255, 0, 0, 0.8)),to(rgba(255, 0, 0, 0.2));
+	background: linear-gradient(top, rgba(255, 0, 0, 0.8)),to(rgba(1255, 0, 0, 0.2));
+	filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0,StartColorStr='#9d8b83', EndColorStr='#847670');
+}
+
 
 #new-todo,
 .edit {
@@ -292,6 +301,14 @@ label[for='toggle-all'] {
 
 #todo-list li.editing:last-child {
 	margin-bottom: -1px;
+}
+
+#todo-list.all-completed li:not(.completed) {
+	display: none;
+}
+
+#todo-list.all-active li.completed{
+	display: none;
 }
 
 #footer {

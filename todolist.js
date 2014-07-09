@@ -1,10 +1,10 @@
 var TODO = {
 	ENTER_KEYCODE : 13,
 	init : function(){
-		document.addEventListener("DOMContentLoaded",function(){
-			this.get(function(){
-				document.getElementById("new-todo").addEventListener("keydown",this.add.bind(this));	
-			}.bind(this));
+		this.navigators = document.querySelectorAll("#filters a");
+		this.currentSelectedNavigator = 0;
+		this.get(function(){
+			document.getElementById("new-todo").addEventListener("keydown",this.add.bind(this));	
 		}.bind(this));
 	},
 	initEventBind : function(){
@@ -28,14 +28,12 @@ var TODO = {
 		var input = document.createElement("input");
 		input.className = "toggle";
 		input.setAttribute("type","checkbox");
-		// input.addEventListener("click",this.completed);
 
 		var label = document.createElement("label");
 		label.innerText = todo;
 
 		var button = document.createElement("button");
 		button.className = "destroy";
-		// button.addEventListener("click",this.remove);
 
 		div.appendChild(input);
 		div.appendChild(label);
@@ -105,6 +103,78 @@ var TODO = {
 			this.initEventBind();
 			callback();
 		}.bind(this));
+	},
+	selectedNavigator : function(index){
+		this.navigators[this.currentSelectedNavigator].classList.remove("selected");
+		this.navigators[index].classList.add("selected");
+		this.currentSelectedNavigator = index;
+	},
+	allView : function(){
+		this.selectedNavigator(0);
+		document.getElementById("todo-list").className = "";
+	},
+	activeView : function(){
+		this.selectedNavigator(1);
+		document.getElementById("todo-list").className = "";
+		document.getElementById("todo-list").className = "all-active";
+	},
+	completedView : function(){
+		this.selectedNavigator(2);
+		document.getElementById("todo-list").className = "";
+		document.getElementById("todo-list").className = "all-completed";
 	}
 };
-TODO.init();
+
+
+
+
+var TODOHistory = {
+	"init" : function(){
+		window.addEventListener("popstate",this.historyFilter);
+		document.getElementById("filters").addEventListener("click",this.clickFilter);
+
+	},
+	"clickFilter":function(e){
+		e.preventDefault();
+		var anchor = e.target;
+		var tagName = e.target.tagName.toLowerCase();
+		if(tagName=="li"){
+			anchor = e.target.firstElementChild;
+		}else if(tagName=="ul"){
+			return;
+		}
+		
+		var location = anchor.getAttribute("href");
+		var method = location;
+		if(location=="index.html"){method = "all"}
+		history.pushState({"method":method}, null, location);
+
+		TODO[method+"View"]();
+	},
+	"historyFilter" : function(e){
+		var method;
+		if(e.state==null){
+			method = "all";
+		}else{
+			method = e.state.method;
+		}
+		TODO[method+"View"]();	
+	}
+
+};
+
+document.addEventListener("DOMContentLoaded",function(){
+	TODO.init();
+	TODOHistory.init();
+});
+
+
+
+
+
+
+
+
+
+
+

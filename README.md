@@ -22,10 +22,10 @@ git remote add upstream https://github.com/NHNNEXT/2014-02-HTML5-1
 
 ### 3. 본인에 아이디/주차에 맞는 브랜치로 checkout
 ```
-git branch -a//자신의 아이디/주차 브랜치를 확인
+git branch -a//자신의 아이디 확인
 
-git checkout -b 주차_로컬_브랜치명 원격_브랜치명
-ex) git checkout -b 1week remotes/origin/mixed/1week
+git checkout -b 아이디 원격_브랜치명
+ex) git checkout -b mixed remotes/origin/mixed
 ```
 
 ### 4. 개발 시작
@@ -40,20 +40,18 @@ git commit -m "메세지" // 커밋
 
 ### 5. 본인 원격 저장소에 올리기
 ```
-git push origin 주차_로컬_브랜치명:원격_브랜치명
-ex) git push origin 1week:mixed/1week
+git push origin 아이디:원격_브랜치명
+ex) git push origin mixed:mixed
 ```
 
 ### 6. 교수한데 pull request
 ```
-git push upstream 로컬_브랜치명:원격_브랜치명
-ex) git push upstream 1week:mixed/1week
+git push upstream 아이디:원격_브랜치명
+ex) git push upstream mixed:mixed
 ```
 
-### 7. 교수가 ok하면 다음 주차 브랜치를 만들어줌
-```
-ex) mixed/2weeks
-```
+### 7. 교수가 ok하면 다음 주차 진행
+
 
 ### 8. 원본 저장소와 싱크
 ```
@@ -62,4 +60,4 @@ git checkout master
 git rebase upstream/master
 ```
 
-### 9. 3번부터 다시 시작.
+### 9. 4번부터 다시 시작.

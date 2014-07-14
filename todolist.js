@@ -21,6 +21,7 @@ function addToList(e){
 			"<li><div class = \"view\"><input class=\"toggle\" type=\"checkbox\"><label><%=TODO%></label><button class=\"destroy\"></button></div></li>")
 		var result = compiled({TODO:eNewTodo.value});
 		eTodoList.insertAdjacentHTML("beforeend", result);
+		fadeIn(eTodoList.lastChild, 300);
 		eNewTodo.value ="";
 	}
 }
@@ -40,9 +41,30 @@ function checkTodo(e){
 	}
 }
 
+function fadeIn(element, totalTime){
+	var opacity = 0;
+	var interval = 10;
+	//3초 동안 50개의 간격으로 ( 50/3000 = gap )
+	//opacity를 줄여간다. 
+	gap = interval / totalTime;
+
+	function func() {
+		opacity +=gap;
+		element.style.opacity = opacity;
+
+		if(opacity >= 1) {
+			window.clearInterval(fading);
+		}
+	}
+	var fading = window.setInterval(func, interval);
+}
+
+
 function fadeOut(element, totalTime){
 	var opacity = 1;
 	var interval = 50;
+	//3초 동안 50개의 간격으로 ( 50/3000 = gap )
+	//opacity를 줄여간다. 
 	gap = interval / totalTime;
 
 	function func() {

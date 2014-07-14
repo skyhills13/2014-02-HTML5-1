@@ -21,20 +21,53 @@ function addToList(e){
 			"<li><div class = \"view\"><input class=\"toggle\" type=\"checkbox\"><label><%=TODO%></label><button class=\"destroy\"></button></div></li>")
 		var result = compiled({TODO:eNewTodo.value});
 		eTodoList.insertAdjacentHTML("beforeend", result);
-		
 		eNewTodo.value ="";
 	}
 }
 
 function checkTodo(e){
-	if(e.target.type === "checkbox"){
+	if(e.target.nodeName == "INPUT" ){
 		if(e.target.parentNode.parentNode.className === ""){
 			e.target.parentNode.parentNode.className = "completed";
 		} else {
 			e.target.parentNode.parentNode.className = "";
 		}
+	} else if(e.target.nodeName == "BUTTON" ){
+		var eTarget = e.target.parentNode.parentNode;
+		fadeOut(eTarget, 300);
+		//fadeoutEffect(eTarget,3);
+		//eTarget.parentNode.removeChild(eTarget);
 	}
 }
+
+function fadeOut(element, totalTime){
+	var opacity = 1;
+	var interval = 50;
+	gap = interval / totalTime;
+
+	function func() {
+		opacity -=gap;
+		element.style.opacity = opacity;
+
+		if(opacity <= 0) {
+			window.clearInterval(fading);
+			element.style.display = "none";
+			element.parentNode.removeChild(element);
+		}
+	}
+	var fading = window.setInterval(func, interval);
+}
+
+// function fadeoutEffect(element, interval){
+// 	for ( var i = 10 ; i > 0 ; --i) {
+// 		var opacity = i/10;
+// 		setTimeout( function(opacity) {
+// 			element.style["-moz-opacity"] = opacity;
+// 			element.style["opacity"] = opacity;
+// 			element.style["filter"] = "alpha(opacity=" + (opacity*100).toString();
+// 		}, interval )
+// 	}
+// }
 
 function loadEvent (){
 	document.getElementById("new-todo").addEventListener("keydown",addToList);

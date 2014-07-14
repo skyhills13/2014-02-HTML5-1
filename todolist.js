@@ -21,31 +21,29 @@ function addToList(e){
 			"<li><div class = \"view\"><input class=\"toggle\" type=\"checkbox\"><label><%=TODO%></label><button class=\"destroy\"></button></div></li>")
 		var result = compiled({TODO:eNewTodo.value});
 		eTodoList.insertAdjacentHTML("beforeend", result);
-		fadeIn(eTodoList.lastChild, 300);
+		//fadeIn(eTodoList.lastChild, 300);
 		eNewTodo.value ="";
 	}
 }
 
 function checkTodo(e){
-	if(e.target.nodeName == "INPUT" ){
-		if(e.target.parentNode.parentNode.className === ""){
-			e.target.parentNode.parentNode.className = "completed";
+	var eInput = e.target;
+	var eLi = eInput.parentNode.parentNode;
+
+	if(eInput.nodeName == "INPUT" ){
+		if(eInput.checked){
+			eLi.className = "completed";
 		} else {
-			e.target.parentNode.parentNode.className = "";
+			eLi.className = "";
 		}
-	} else if(e.target.nodeName == "BUTTON" ){
-		var eTarget = e.target.parentNode.parentNode;
-		fadeOut(eTarget, 300);
-		//fadeoutEffect(eTarget,3);
-		//eTarget.parentNode.removeChild(eTarget);
+	} else if(eInput.nodeName == "BUTTON" ){
+		fadeOut(eLi, 300);
 	}
 }
 
 function fadeIn(element, totalTime){
 	var opacity = 0;
 	var interval = 10;
-	//3초 동안 50개의 간격으로 ( 50/3000 = gap )
-	//opacity를 줄여간다. 
 	gap = interval / totalTime;
 
 	function func() {
@@ -58,7 +56,6 @@ function fadeIn(element, totalTime){
 	}
 	var fading = window.setInterval(func, interval);
 }
-
 
 function fadeOut(element, totalTime){
 	var opacity = 1;
@@ -79,17 +76,6 @@ function fadeOut(element, totalTime){
 	}
 	var fading = window.setInterval(func, interval);
 }
-
-// function fadeoutEffect(element, interval){
-// 	for ( var i = 10 ; i > 0 ; --i) {
-// 		var opacity = i/10;
-// 		setTimeout( function(opacity) {
-// 			element.style["-moz-opacity"] = opacity;
-// 			element.style["opacity"] = opacity;
-// 			element.style["filter"] = "alpha(opacity=" + (opacity*100).toString();
-// 		}, interval )
-// 	}
-// }
 
 function loadEvent (){
 	document.getElementById("new-todo").addEventListener("keydown",addToList);

@@ -10,6 +10,9 @@ function addToList(e){
 		var eNewTodo = document.getElementById("new-todo");
 		var eTodoList = document.getElementById("todo-list");
 
+		//var template = document.getElementById("template");
+		//var templateInnerHTML = template.innerHTML;
+		//var compiled = _.template(templateInnerHTML);
 		var compiled = _.template(
 			"<li><div class = \"view\"><input class=\"toggle\" type=\"checkbox\"><label><%=TODO%></label><button class=\"destroy\"></button></div></li>")
 		var result = compiled({TODO:eNewTodo.value});
@@ -25,10 +28,20 @@ function loadEvent (){
 document.addEventListener("DOMContentLoaded", loadEvent);
 
 
-/* <html file에 <script type="text/template">로 format 만들어놓고 하려다 실패한 것
-	
+/* <html file에 <script type="text/template">로 format 만들어놓는 방법 */
+	/* 아래 코드를 html file의 ul 태그 하위에 삽입 
+	<script type = "text/template" id = "template">
+		<li>
+			<div class = "view">
+				<input class="toggle" type="checkbox">
+				<label><%=TODO%></label>
+				<button class="destroy"></button>
+			</div>
+		</li>
+	</script>
+	*/
+	/*	js file의 아래 부분 주석 해제 
 		var template = document.getElementById("template");
 		var templateInnerHTML = template.innerHTML;
 		var compiled = _.template(templateInnerHTML);
-		console.log(templateInnerHTML);
-*/
+	*/

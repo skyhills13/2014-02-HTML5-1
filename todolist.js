@@ -10,71 +10,79 @@
 	- 애니메이션 기능을 추가.
 */
 
-var ENTER_KEYCODE = 13;
+var oTodoList = {
+	ENTER_KEYCODE : 13,
+	eNewTodo : document.getElementById("new-todo"),
+	eTodoList : document.getElementById("todo-list"),
 
-function addToList(e){
-	if ( e.keyCode == ENTER_KEYCODE ) {
-		var eNewTodo = document.getElementById("new-todo");
-		var eTodoList = document.getElementById("todo-list");
+	init : function () {
+		
+		document.addEventListener("DOMContentLoaded", this.addEvents.bind(this));
+	},
 
-		var compiled = _.template(
-			"<li><div class = \"view\"><input class=\"toggle\" type=\"checkbox\"><label><%=TODO%></label><button class=\"destroy\"></button></div></li>")
-		var result = compiled({TODO:eNewTodo.value});
-		eTodoList.insertAdjacentHTML("beforeend", result);
-		//fadeEffect(eTodoList.lastChild, 300, "in");
-		eNewTodo.value ="";
-	}
-}
+	addEvents: function(){
+		/*script tag를 html file 상단에 넣었을 경우 
+		this.eNewTodo = document.getElementById("new-todo");
+		this.eTodoList = document.getElementById("todo-list"); */
+		this.eNewTodo.addEventListener("keydown",this.addToList.bind(this));
+		this.eTodoList.addEventListener("click", this.checkTodo.bind(this));		
+	},
 
-function checkTodo(e){
-	var eInput = e.target;
-	var eLi = eInput.parentNode.parentNode;
-
-	if(eInput.nodeName == "INPUT" ){
-		if(eInput.checked){
-			eLi.className = "completed";
-		} else {
-			eLi.className = "";
+	addToList : function(e) {
+		if ( e.keyCode == this.ENTER_KEYCODE ) {
+			/*javascript로 실행시 li class의 created 지울 것 */
+			var compiled = _.template(
+				"<li class =\"created\"><div class = \"view\"><input class=\"toggle\" type=\"checkbox\"><label><%=TODO%></label><button class=\"destroy\"></button></div></li>")
+			var result = compiled({TODO:this.eNewTodo.value});
+			this.eTodoList.insertAdjacentHTML("beforeend", result);
+			//this.fadeEffect(this.eTodoList.lastChild, 300, 1);
+			this.eNewTodo.value ="";
 		}
-	} else if(eInput.nodeName == "BUTTON" ){
-		fadeEffect(eLi, 200, "out");
-	}
-}
+	},
 
-function fadeEffect(element, totalTime, direction){
-	var opacity = 0;
-	var interval = 10;
-	var gap = interval / totalTime;	
-	
-	if ( direction === "in"){
-		function func() {
-			opacity +=gap;
-			element.style.opacity = opacity;
+	checkTodo : function(e) {
+		var eInput = e.target;
+		var eLi = eInput.parentNode.parentNode;
+		var sNodeNameInput = eInput.nodeName.toUpperCase();
+		var sNodeNameButton = eInput.nodeName.toUpperCase();
 
-			if(opacity >= 1) {
-				window.clearInterval(fading);
+		if(sNodeNameInput == "INPUT" ){
+			if(eInput.checked){
+				eLi.className = "completed";
+			} else {
+				eLi.className = "";
 			}
-		}
-	} else if ( direction === "out"){
-		var opacity = 1;
+		} else if( sNodeNameButton == "BUTTON" ){
+			/*javascript로 fadeEffect사용시, 아래의 코드 5줄은 주석처리후 fadeEffect 주석 해제*/
+			eLi.className = "old";
+			setTimeout(function(){ 
+				eLi.style.display = "none";
+				eLi.parentNode.removeChild(eLi);
+			}, 400);
+			//this.fadeEffect(eLi, 200, -1);
+		}	
+	},
+	fadeEffect : function(element, totalTime, direction){
+		var opacity = 0.5 - (direction * 0.5);
 		var interval = 10;
-		function func() {
-			opacity -=gap;
-			element.style.opacity = opacity;
+		var gap = interval / totalTime * direction;	
 
-			if(opacity <= 0) {
+		var execute = function (nDirection, func) {
+			opacity += gap;
+			element.style.opacity = opacity;
+			if ( (opacity >= 1) || ( opacity <= 0)) {
 				window.clearInterval(fading);
-				element.style.display = "none";
-				element.parentNode.removeChild(element);
+				if ( nDirection === -1) {
+					func();
+				}	
 			}
 		}
+
+		var fading = window.setInterval(execute.bind(this, direction, function(){
+			element.style.display = "none";
+			element.parentNode.removeChild(element);
+		}), interval);	
 	}
-	var fading = window.setInterval(func, interval);	
 }
 
-function loadEvent (){
-	document.getElementById("new-todo").addEventListener("keydown",addToList);
-	document.querySelector("ul").addEventListener("click", checkTodo);
-}
-
-document.addEventListener("DOMContentLoaded", loadEvent);
+oTodoList.init();

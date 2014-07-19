@@ -31,10 +31,12 @@ var oAjax = {
 		var addNgetUrl = "http://ui.nhnnext.org:3333/skyhills13";
 		request.open("PUT", addNgetUrl, true );
 		request.onload = function () {
+			//2. 요청에 대한 응답값을 인자로 받아서 callback에서 사용
 			callback(JSON.parse(request.responseText));
 		}
 		request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded;charset=utf-8");
 		//request.setRequestHeader("Access-Control-Allow-Origin", "*");
+		//1.여기서 요청을 보내고
 		request.send("todo="+TODO);
 		
 	},
@@ -50,18 +52,27 @@ var oAjax = {
 		request.send("completed="+oParam.completed);
 			
 	},
-	remove : function () {
-
+	remove : function (oParam, callback) {
+		var request = new XMLHttpRequest();
+		var compNremoveUrl = "http://ui.nhnnext.org:3333/skyhills13/"+oParam.key;
+		request.open("DELETE", compNremoveUrl, true );
+		request.onload = function () {
+			callback();
+		}
+		request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded;charset=utf-8");
+		//request.setRequestHeader("Access-Control-Allow-Origin", "*");
+		request.send();
 	},
-	get : function () {
+	get : function (callback) {
 		var addNgetUrl = "http://ui.nhnnext.org:3333/skyhills13";
 		var request = new XMLHttpRequest();
 		request.open("GET", addNgetUrl, true);
 		request.onload = function() {
-
+			var oResult = JSON.parse(request.responseText); 
+			callback(oResult);
 		}
 		request.setRequestHeader("Content-Type", "application/xml; charset=utf-8");
-		request.setRequestHeader("Access-Control-Allow-Origin", "*");
+		//request.setRequestHeader("Access-Control-Allow-Origin", "*");
 		request.send();
 	}
 }
@@ -72,8 +83,8 @@ var oTodoList = {
 	eTodoList : document.getElementById("todo-list"),
 
 	init : function () {
-		
 		document.addEventListener("DOMContentLoaded", this.addEvents.bind(this));
+		document.addEventListener("DOMContentLoaded", this.loadTodo.bind(this));
 	},
 
 	addEvents: function(){
@@ -84,8 +95,30 @@ var oTodoList = {
 		this.eTodoList.addEventListener("click", this.checkTodo.bind(this));		
 	},
 
+	loadTodo : function(){
+
+		oAjax.get(function(oResult){
+			var oMyTodo = {};
+			//console.log(oResult.length);
+			for(var i = 0; i < oResult.length ; ++i) {
+				if ( oResult[i].nickname === "skyhills13" ) {
+					//console.log(oResult[i].id);
+					var compiled = _.template(
+						"<li class =\"created\"><div class = \"view\"><input class=\"toggle\" type=\"checkbox\"><label><%=TODO%></label><button class=\"destroy\"></button></div></li>")
+					var result = compiled({TODO:oResult[i].todo});
+					this.eTodoList.insertAdjacentHTML("beforeend", result);
+					this.eTodoList.lastChild.dataset.key = oResult[i].id;
+				} 
+			}
+		}.bind(this));
+	},
+
 	addToList : function(e) {
 		if ( e.keyCode == this.ENTER_KEYCODE ) {
+			/*여기서 이것을 callback으로 사용하는 이유는, ajax가 비동기로 실행되기 때문.
+			callback함수 내부에 있는 내용이, ajax와 별도로 실행되어서, ajax는 실패했는데 
+			dom(겉모습)은 생기는 경우가 있을 수 있기 때문  
+			*/
 			oAjax.add(this.eNewTodo.value, function(json){
 				/*javascript로 실행시 li class의 created 지울 것 */
 				var compiled = _.template(
@@ -96,6 +129,8 @@ var oTodoList = {
 				//this.fadeEffect(this.eTodoList.lastChild, 300, 1);
 				this.eNewTodo.value ="";	
 			}.bind(this));	
+			//bind를 하지 않을경우, 위에있는 this는 oAjax야. oAjax가 불렀쟈나
+			//했기 때문에 여기 context라서 this는 oTodoList야 
 		}
 	},
 
@@ -118,13 +153,15 @@ var oTodoList = {
 				}
 			}.bind(this));
  		} else if( sNodeNameButton == "BUTTON" ){
-			/*javascript로 fadeEffect사용시, 아래의 코드 5줄은 주석처리후 fadeEffect 주석 해제*/
-			eLi.className = "old";
-			setTimeout(function(){ 
-				eLi.style.display = "none";
-				eLi.parentNode.removeChild(eLi);
-			}, 400);
-			//this.fadeEffect(eLi, 200, -1);
+ 			oAjax.remove(oParam, function(){
+ 				/*javascript로 fadeEffect사용시, 아래의 코드 5줄은 주석처리후 fadeEffect 주석 해제*/
+				eLi.className = "old";
+				setTimeout(function(){ 
+					eLi.style.display = "none";
+					eLi.parentNode.removeChild(eLi);
+				}, 400);
+				//this.fadeEffect(eLi, 200, -1);
+ 			});
 		}	
 	},
 	fadeEffect : function(element, totalTime, direction){

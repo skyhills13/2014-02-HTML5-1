@@ -25,55 +25,27 @@
 ] 
 */
 
+//send의 param이 없는 애끼리 묶을 것인가 
+//url이 같은 애들끼리 묶을 것인가
 var oAjax = {
-	add : function(TODO, callback){
+	xhr : function(oParam, method, url, callback){
+		var sRequestParam = "";
+		if ( method == "GET") {
+			sRequestParam = null;
+		} else if ( method == "PUT") {
+			sRequestParam = "todo=" + oParam.todo;
+		} else if (method == "POST") {
+			sRequestParam = "completed=" + oParam.completed;
+		} else {
+			sRequestParam = null;
+		}
 		var request = new XMLHttpRequest();
-		var addNgetUrl = "http://ui.nhnnext.org:3333/skyhills13";
-		request.open("PUT", addNgetUrl, true );
-		request.onload = function () {
-			//2. 요청에 대한 응답값을 인자로 받아서 callback에서 사용
+		request.open(method, url, true );
+		request.onload = function(){
 			callback(JSON.parse(request.responseText));
 		}
-		request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded;charset=utf-8");
-		//request.setRequestHeader("Access-Control-Allow-Origin", "*");
-		//1.여기서 요청을 보내고
-		request.send("todo="+TODO);
-		
-	},
-	complete : function (oParam, callback ){
-		var request = new XMLHttpRequest();
-		var compNremoveUrl = "http://ui.nhnnext.org:3333/skyhills13/"+oParam.key;
-		request.open("POST", compNremoveUrl, true );
-		request.onload = function () {
-			callback(JSON.parse(request.responseText));
-		}
-		request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded;charset=utf-8");
-		//request.setRequestHeader("Access-Control-Allow-Origin", "*");
-		request.send("completed="+oParam.completed);
-			
-	},
-	remove : function (oParam, callback) {
-		var request = new XMLHttpRequest();
-		var compNremoveUrl = "http://ui.nhnnext.org:3333/skyhills13/"+oParam.key;
-		request.open("DELETE", compNremoveUrl, true );
-		request.onload = function () {
-			callback();
-		}
-		request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded;charset=utf-8");
-		//request.setRequestHeader("Access-Control-Allow-Origin", "*");
-		request.send();
-	},
-	get : function (callback) {
-		var addNgetUrl = "http://ui.nhnnext.org:3333/skyhills13";
-		var request = new XMLHttpRequest();
-		request.open("GET", addNgetUrl, true);
-		request.onload = function() {
-			var oResult = JSON.parse(request.responseText); 
-			callback(oResult);
-		}
-		request.setRequestHeader("Content-Type", "application/xml; charset=utf-8");
-		//request.setRequestHeader("Access-Control-Allow-Origin", "*");
-		request.send();
+		request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded; charset=utf-8");
+		request.send(sRequestParam);
 	}
 }
 
@@ -81,6 +53,7 @@ var oTodoList = {
 	ENTER_KEYCODE : 13,
 	eNewTodo : document.getElementById("new-todo"),
 	eTodoList : document.getElementById("todo-list"),
+	sRequestUrl : "http://ui.nhnnext.org:3333/skyhills13",
 
 	init : function () {
 		document.addEventListener("DOMContentLoaded", this.addEvents.bind(this));
@@ -95,42 +68,45 @@ var oTodoList = {
 		this.eTodoList.addEventListener("click", this.checkTodo.bind(this));		
 	},
 
+	insertElement : function(todo, nKey){
+		var compiled = _.template(
+			"<li class =\"created\"><div class = \"view\"><input class=\"toggle\" type=\"checkbox\"><label><%=TODO%></label><button class=\"destroy\"></button></div></li>")
+		var result = compiled({TODO:todo});
+		this.eTodoList.insertAdjacentHTML("beforeend", result);
+		this.eTodoList.lastChild.dataset.key = nKey;
+	},
+
+	//TODO:새로고침했을 때 순서가 엉망으로 들어가는 문제 
 	loadTodo : function(){
 
-		oAjax.get(function(oResult){
-			var oMyTodo = {};
-			//console.log(oResult.length);
+		var callback = function(oResult){
 			for(var i = 0; i < oResult.length ; ++i) {
 				if ( oResult[i].nickname === "skyhills13" ) {
 					//console.log(oResult[i].id);
-					var compiled = _.template(
-						"<li class =\"created\"><div class = \"view\"><input class=\"toggle\" type=\"checkbox\"><label><%=TODO%></label><button class=\"destroy\"></button></div></li>")
-					var result = compiled({TODO:oResult[i].todo});
-					this.eTodoList.insertAdjacentHTML("beforeend", result);
-					this.eTodoList.lastChild.dataset.key = oResult[i].id;
+					this.insertElement(oResult[i].todo, oResult[i].id);
 				} 
 			}
-		}.bind(this));
+		}.bind(this);
+		oAjax.xhr ( null, "GET", this.sRequestUrl, callback);
+
 	},
 
 	addToList : function(e) {
 		if ( e.keyCode == this.ENTER_KEYCODE ) {
-			/*여기서 이것을 callback으로 사용하는 이유는, ajax가 비동기로 실행되기 때문.
+			/* 여기서 이것을 callback으로 사용하는 이유는, ajax가 비동기로 실행되기 때문.
 			callback함수 내부에 있는 내용이, ajax와 별도로 실행되어서, ajax는 실패했는데 
 			dom(겉모습)은 생기는 경우가 있을 수 있기 때문  
 			*/
-			oAjax.add(this.eNewTodo.value, function(json){
+			var oParam = {
+				"todo" : this.eNewTodo.value
+			}
+			var callback = function(oResult) {
 				/*javascript로 실행시 li class의 created 지울 것 */
-				var compiled = _.template(
-					"<li class =\"created\"><div class = \"view\"><input class=\"toggle\" type=\"checkbox\"><label><%=TODO%></label><button class=\"destroy\"></button></div></li>")
-				var result = compiled({TODO:this.eNewTodo.value});
-				this.eTodoList.insertAdjacentHTML("beforeend", result);
-				this.eTodoList.lastChild.dataset.key = json.insertId;
+				this.insertElement(this.eNewTodo.value, oResult.insertId);
 				//this.fadeEffect(this.eTodoList.lastChild, 300, 1);
 				this.eNewTodo.value ="";	
-			}.bind(this));	
-			//bind를 하지 않을경우, 위에있는 this는 oAjax야. oAjax가 불렀쟈나
-			//했기 때문에 여기 context라서 this는 oTodoList야 
+			}.bind(this);
+			oAjax.xhr(oParam, "PUT", this.sRequestUrl, callback.bind(this));
 		}
 	},
 
@@ -145,23 +121,25 @@ var oTodoList = {
 			"completed" : completed 
 		}
 		if(sNodeNameInput == "INPUT" ) {
-			oAjax.complete(oParam, function(){
+			var callback = function(){
 				if(completed === "1"){
 					eLi.className = "completed";
 				} else {
 					eLi.className = "";
 				}
-			}.bind(this));
+			}
+			oAjax.xhr(oParam, "POST", this.sRequestUrl+"/"+oParam.key, callback);	
  		} else if( sNodeNameButton == "BUTTON" ){
- 			oAjax.remove(oParam, function(){
+ 			var callback = function(){
  				/*javascript로 fadeEffect사용시, 아래의 코드 5줄은 주석처리후 fadeEffect 주석 해제*/
 				eLi.className = "old";
 				setTimeout(function(){ 
 					eLi.style.display = "none";
 					eLi.parentNode.removeChild(eLi);
 				}, 400);
-				//this.fadeEffect(eLi, 200, -1);
- 			});
+				//this.fadeEffect(eLi, 200, -1);		
+ 			}
+ 			oAjax.xhr(oParam, "DELETE", this.sRequestUrl+"/"+oParam.key, callback);
 		}	
 	},
 	fadeEffect : function(element, totalTime, direction){

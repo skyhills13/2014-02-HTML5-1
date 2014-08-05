@@ -1,28 +1,14 @@
 /*
-# 세번째
-1. 코드 개선하기.
-	- 오브젝트 형식으로.
-2. 서버와 연동하기.
-	- 추가할 때 API랑 연동하기.
-	- 완료할 때 API랑 연동하기.
-	- 삭제할 때 API랑 연동하기.
-	- 가져올 때 API랑 연동하기.
-#기타 응답값
-{
-	"fieldCount":0,
-	"affectedRows":1,
-	"insertId":0,
-	"serverStatus":2,
-	"warningCount":0,
-	"message":"(Rows matched: 1 Changed: 1 Warnings: 0",
-	"protocol41":true,
-	"changedRows":1
-}
-#GET 응답값
-[
-{"id":2,"todo":"hi","nickname":"mixed","completed":0,"date":"2014-06-25T05:38:12.000Z"},
-{"id":3,"todo":"안녕","nickname":"mixed","completed":0,"date":"2014-06-25T05:38:55.000Z"}
-] 
+# 네번째
+1. 온라인 / 오프라인
+	- 오프라인일 때 localStorage에 저장하기.
+	- 온라인일 때 서버에 싱크 맞추기.
+
+# 다섯번째
+1. 뒤로 가기.
+	- pushState활용하기.
+2. 등록,삭제할 때 애니메이션 입히기
+	- CSS3활용
 */
 
 var ajax = {
@@ -41,7 +27,12 @@ var todoList = {
 	ENTER_KEYCODE : 13,
 	eNewTodo : document.getElementById("new-todo"),
 	eTodoList : document.getElementById("todo-list"),
+
+	eFilters : document.getElementById("filters"),
+	eHeader : document.getElementById("header"),
+
 	requestUrl : "http://ui.nhnnext.org:3333/skyhills13",
+	currentFilterIndex : 0,
 
 	init : function () {
 		//DomContentLoaded에는 하나만 붙이는거야. 
@@ -54,11 +45,57 @@ var todoList = {
 	},
 
 	addEvents: function(){
-		/*script tag를 html file 상단에 넣었을 경우 
-		this.eNewTodo = document.getElementById("new-todo");
-		this.eTodoList = document.getElementById("todo-list"); */
 		this.eNewTodo.addEventListener("keydown",this.addToDo.bind(this));
-		this.eTodoList.addEventListener("click", this.delegateClick.bind(this));
+		this.eTodoList.addEventListener("click", this.changeTodo.bind(this));
+		this.eFilters.addEventListener("click", this.changeFilter.bind(this));
+
+		window.addEventListener("online", this.onofflineEvent );
+		window.addEventListener("offline", this.onofflineEvent );
+
+	},
+
+	onofflineEvent : function(e) {
+		document.getElementById("header").classList[navigator.onLine?"remove":"add"]("offline");
+		//이건 왜 안될까? 답 찾아라 
+		// console.log(this.eHeader);
+		// this.eHeader.classList[navigator.onLine?"remove":"add"]("offline");	
+
+	},
+
+	changeFilter : function(e) {
+		var targetTagName = e.target.tagName.toUpperCase();
+		var targetHref = e.target.getAttribute("href");
+		if ( targetTagName == "A") {
+			if (targetHref == "#/active") {
+				this.changeFilterStatus ( 1 );
+				this.viewActive();
+			} else if ( targetHref == "#/completed") {
+				this.changeFilterStatus ( 2 );
+				this.viewCompleted();
+			} else {
+				this.changeFilterStatus ( 0 );
+				this.viewAll();
+			}
+		}
+	},
+
+	viewAll : function () {
+		this.eTodoList.className = "";
+	},
+
+	viewActive : function() {
+		this.eTodoList.className = "all-active";
+	},
+
+	viewCompleted : function () {
+		this.eTodoList.className = "all-completed";
+	},
+
+	changeFilterStatus : function(selectedFilterIndex) {
+		var Filters = document.querySelectorAll("#filters a");
+		Filters[this.currentFilterIndex].classList.remove("selected");
+		Filters[selectedFilterIndex].classList.add("selected");
+		this.currentFilterIndex = selectedFilterIndex; 
 	},
 
 	loadTodo : function(){
@@ -107,7 +144,7 @@ var todoList = {
 		}
 	},
 
-	delegateClick : function(e) {
+	changeTodo : function(e) {
 		var eInput = e.target;
 		var eLi = eInput.parentNode.parentNode;
 		var completed = eInput.checked?"1":"0";

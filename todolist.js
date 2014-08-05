@@ -67,11 +67,10 @@ var oTodoList = {
 		/*script tag를 html file 상단에 넣었을 경우 
 		this.eNewTodo = document.getElementById("new-todo");
 		this.eTodoList = document.getElementById("todo-list"); */
-		this.eNewTodo.addEventListener("keydown",this.addToList.bind(this));
+		this.eNewTodo.addEventListener("keydown",this.addToDo.bind(this));
 		this.eTodoList.addEventListener("click", this.delegateClick.bind(this));
 	},
 
-	//TODO:새로고침했을 때 순서가 엉망으로 들어가는 문제 
 	loadTodo : function(){
 		var savedList ="";
 		var callback = function(oResult){
@@ -95,7 +94,7 @@ var oTodoList = {
 
 	},
 
-	addToList : function(e) {
+	addToDo : function(e) {
 		if ( e.keyCode == this.ENTER_KEYCODE ) {
 			var oParam = {
 				"todo" : this.eNewTodo.value

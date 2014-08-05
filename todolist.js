@@ -25,33 +25,23 @@
 ] 
 */
 
-var oAjax = {
-	xhr : function(oParam, method, url, callback){
-		var sRequestParam = "";
-		if ( method == "GET") {
-			sRequestParam = null;
-		} else if ( method == "PUT") {
-			sRequestParam = "todo=" + oParam.todo;
-		} else if (method == "POST") {
-			sRequestParam = "completed=" + oParam.completed;
-		} else {
-			sRequestParam = null;
-		}
+var ajax = {
+	xhr : function(requestData, method, url, callback){
 		var request = new XMLHttpRequest();
 		request.open(method, url, true );
 		request.onload = function(){
 			callback(JSON.parse(request.responseText));
 		}
 		request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded; charset=utf-8");
-		request.send(sRequestParam);
+		request.send(requestData);
 	}
 }
 
-var oTodoList = {
+var todoList = {
 	ENTER_KEYCODE : 13,
 	eNewTodo : document.getElementById("new-todo"),
 	eTodoList : document.getElementById("todo-list"),
-	sRequestUrl : "http://ui.nhnnext.org:3333/skyhills13",
+	requestUrl : "http://ui.nhnnext.org:3333/skyhills13",
 
 	init : function () {
 		//DomContentLoaded에는 하나만 붙이는거야. 
@@ -73,9 +63,9 @@ var oTodoList = {
 
 	loadTodo : function(){
 		var savedList ="";
-		var callback = function(oResult){
-			for(var i = 0; i < oResult.length ; ++i) {
-				if ( oResult[i].nickname === "skyhills13" ) {
+		var callback = function(requestResult){
+			for(var i = 0; i < requestResult.length ; ++i) {
+				if ( requestResult[i].nickname === "skyhills13" ) {
 					var compiled = _.template(
 						"<li class =\"created\" data-key = <%=DATAKEY%> >"
 						+	"<div class = \"view\">"
@@ -84,22 +74,20 @@ var oTodoList = {
 						+		"<button class=\"destroy\"></button>"
 						+	"</div>"
 						+"</li>")
-					var result = compiled({DATAKEY:oResult[i].id, TODO:oResult[i].todo});
+					var result = compiled({DATAKEY:requestResult[i].id, TODO:requestResult[i].todo});
 					savedList += result;
 				} 
 			}
 			this.eTodoList.insertAdjacentHTML("beforeend", savedList);
 		}.bind(this);
-		oAjax.xhr ( null, "GET", this.sRequestUrl, callback);
+		ajax.xhr ( null, "GET", this.requestUrl, callback);
 
 	},
 
 	addToDo : function(e) {
 		if ( e.keyCode == this.ENTER_KEYCODE ) {
-			var oParam = {
-				"todo" : this.eNewTodo.value
-			}
-			var callback = function(oResult) {
+			var requestData = "todo=" + this.eNewTodo.value;
+			var callback = function(requestResult) {
 				/*javascript로 실행시 li class의 created 지울 것 */
 				var compiled = _.template(
 					"<li class =\"created\">"
@@ -111,11 +99,11 @@ var oTodoList = {
 					+"</li>")
 				var result = compiled({TODO:this.eNewTodo.value});
 				this.eTodoList.insertAdjacentHTML("beforeend", result);
-				this.eTodoList.lastChild.dataset.key = oResult.insertId;
+				this.eTodoList.lastChild.dataset.key = requestResult.insertId;
 				//this.fadeEffect(this.eTodoList.lastChild, 300, 1);
 				this.eNewTodo.value ="";	
 			}.bind(this);
-			oAjax.xhr(oParam, "PUT", this.sRequestUrl, callback.bind(this));
+			ajax.xhr(requestData, "PUT", this.requestUrl, callback.bind(this));
 		}
 	},
 
@@ -125,20 +113,20 @@ var oTodoList = {
 		var completed = eInput.checked?"1":"0";
 		var sNodeNameInput = eInput.nodeName.toUpperCase();
 		var sNodeNameButton = eInput.nodeName.toUpperCase();
-		var oParam = {
+		var param = {
 			"key" : eLi.dataset.key,
 			"completed" : completed 
 		};
 
 		if( sNodeNameInput == "INPUT") {
-			this.checkTodo(eLi, oParam, completed);
+			this.checkTodo(eLi, param, completed);
 		} else if (sNodeNameButton == "BUTTON") {
-			this.deleteTodo(eLi, oParam);
+			this.deleteTodo(eLi, param);
 		} else {
 			return;
 		}
 	},
-	deleteTodo: function(eLi, oParam){
+	deleteTodo: function(eLi, param){
 		var callback = function(){
 			/*javascript로 fadeEffect사용시, 아래의 코드 5줄은 주석처리후 fadeEffect 주석 해제*/
 			eLi.className = "old";
@@ -147,10 +135,10 @@ var oTodoList = {
 			};
 			eLi.addEventListener("webkitAnimationEnd", removeElement ,false);
 			};
-		oAjax.xhr(oParam, "DELETE", this.sRequestUrl+"/"+oParam.key, callback);
+		ajax.xhr(null, "DELETE", this.requestUrl+"/"+param.key, callback);
 	},
 
-	checkTodo : function(eLi, oParam, completed) {
+	checkTodo : function(eLi, param, completed) {
 		var callback = function(){
 			if(completed === "1"){
 				eLi.className = "completed";
@@ -158,7 +146,8 @@ var oTodoList = {
 				eLi.className = "";
 			}
 		};
-		oAjax.xhr(oParam, "POST", this.sRequestUrl+"/"+oParam.key, callback);	
+		var requestData = "completed=" + param.completed;
+		ajax.xhr(requestData, "POST", this.requestUrl+"/"+param.key, callback);	
 	},
 
 	fadeEffect : function(element, totalTime, direction){
@@ -182,4 +171,4 @@ var oTodoList = {
 	}
 }
 
-oTodoList.init();
+todoList.init();

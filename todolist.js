@@ -10,6 +10,9 @@
 2. 등록,삭제할 때 애니메이션 입히기
 	- CSS3활용
 */
+String.prototype.caplitalize = function() {
+	return this.charAt(0).toUpperCase() + this.slice(1);
+}
 
 var ajax = {
 	xhr : function(requestData, method, url, callback){
@@ -51,7 +54,18 @@ var todoList = {
 
 		window.addEventListener("online", this.onofflineEvent );
 		window.addEventListener("offline", this.onofflineEvent );
+		window.addEventListener("popstate", this.changeHistory.bind(this));
 
+	},
+	changeHistory : function(e) {	
+		if (e.state) {
+			var method  = e.state.method.caplitalize();
+			console.log(method);
+			console.log("view"+method);
+			this["view"+method]();
+		} else {
+			this.viewAll();
+		}
 	},
 
 	onofflineEvent : function(e) {
@@ -66,29 +80,34 @@ var todoList = {
 		var targetTagName = e.target.tagName.toUpperCase();
 		var targetHref = e.target.getAttribute("href");
 		if ( targetTagName == "A") {
-			if (targetHref == "#/active") {
-				this.changeFilterStatus ( 1 );
+			if (targetHref === "active") {
 				this.viewActive();
-			} else if ( targetHref == "#/completed") {
-				this.changeFilterStatus ( 2 );
+			} else if ( targetHref === "completed") {
 				this.viewCompleted();
 			} else {
-				this.changeFilterStatus ( 0 );
 				this.viewAll();
 			}
 		}
+		e.preventDefault();
 	},
 
 	viewAll : function () {
 		this.eTodoList.className = "";
+		this.changeFilterStatus ( 0 );
+		history.pushState({"method": "all"}, null , "index.html");
 	},
 
 	viewActive : function() {
 		this.eTodoList.className = "all-active";
+		this.changeFilterStatus ( 1 );
+		history.pushState({"method": "active"}, null , "active");
+		console.log(history);
 	},
 
 	viewCompleted : function () {
 		this.eTodoList.className = "all-completed";
+		this.changeFilterStatus ( 2 );
+		history.pushState({"method": "completed"}, null , "completed");
 	},
 
 	changeFilterStatus : function(selectedFilterIndex) {

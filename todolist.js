@@ -23,14 +23,21 @@ var Ajax = {
 				callback(JSON.parse(request.responseText));
 			}
 			request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded; charset=utf-8");
-			request.send(requestData);	
+			request.send(requestData);
 		} else {
-			localStorage.setItem(method, requestData);
 			//data를 클라이언트에 저장 (로컬스토리지나 indexedDb사용)
+			//NULL일때는 load할때나 delete할때. 
+			if (requestData === null) {
+				localStorage.setItem(method, method+","+url);
+			} else {
+				localStorage.setItem(requestData, method+","+url);
+			}
+			callback();
 		}
 	}
 };
-
+//db에 넣을 것을 로컬에 저장
+//
 var TodoList = {
 	ENTER_KEYCODE : 13,
 	newTodoEle : document.getElementById("new-todo"),
@@ -64,8 +71,8 @@ var TodoList = {
 		this.todoListEle.addEventListener("click", this.changeTodo.bind(this));
 		this.filtersEle.addEventListener("click", this.changeFilter.bind(this));
 
-		window.addEventListener("online", this.onofflineEvent );
-		window.addEventListener("offline", this.onofflineEvent );
+		window.addEventListener("online", this.onofflineEvent.bind(this));
+		window.addEventListener("offline", this.onofflineEvent.bind(this));
 		window.addEventListener("popstate", this.changeHistory.bind(this));
 
 	},
@@ -80,14 +87,30 @@ var TodoList = {
 
 	onofflineEvent : function(e) {
 		document.getElementById("header").classList[navigator.onLine?"remove":"add"]("offline");
-		//이건 왜 안될까? 답 찾아라 
+		// 이건 왜 안될까? 답 찾아라 
 		// console.log(this.headerEle);
 		// this.headerEle.classList[navigator.onLine?"remove":"add"]("offline");	
 		if ( navigator.onLine ) {
+			//서버로 싱크 맞추기 
+			var keys = Object.keys(localStorage);
 			for(var key in localStorage) {
-				var value = localStorage[key]; 
-				localStorage.clear();
+				var value = localStorage[key];
+				var methodNurl = value.split(",");
+				if (key === "DELETE") {
+					key = null;
+				}
+				console.log(methodNurl);
+				Ajax.xhr(key, methodNurl[0], methodNurl[1], function(requestResult){
+					if ( methodNurl[0] === "PUT") {
+						this.todoListEle.lastChild.dataset.key = requestResult.insertId;
+					} else if (methodNurl[0] === "POST") {
+						console.log("check sync");
+					} else if ( methodNurl[0] === "DELETE") {
+						console.log("delete sync");
+					}
+				}.bind(this));
 			}
+			localStorage.clear();
 		}
 	},
 
@@ -115,9 +138,6 @@ var TodoList = {
 		var Filters = document.querySelectorAll("#filters a");
 		Filters[this.currentFilterIndex].classList.remove("selected");
 		
-		console.log(selectedFilterIndex);
-		console.log(Filters[selectedFilterIndex]);
-		
 		Filters[selectedFilterIndex].classList.add("selected");
 		this.currentFilterIndex = selectedFilterIndex; 
 	},
@@ -128,14 +148,16 @@ var TodoList = {
 			for(var i = 0; i < requestResult.length ; ++i) {
 				if ( requestResult[i].nickname === "skyhills13" ) {
 					var compiled = _.template(
-						"<li class =\"created\" data-key = <%=DATAKEY%> >"
+						"<li class = <%=COMPLETED%> data-key = <%=DATAKEY%> >"
 						+	"<div class = \"view\">"
 						+		"<input class=\"toggle\" type=\"checkbox\">"
 						+		"<label><%=TODO%></label>"
 						+		"<button class=\"destroy\"></button>"
 						+	"</div>"
 						+"</li>")
-					var result = compiled({DATAKEY:requestResult[i].id, TODO:requestResult[i].todo});
+					var result = compiled({ COMPLETED:requestResult[i].completed, DATAKEY:requestResult[i].id, TODO:requestResult[i].todo});
+					result = result.replace("class = 0" , "");
+					result = result.replace("class = 1", "class = completed");
 					savedList += result;
 				} 
 			}
@@ -159,7 +181,11 @@ var TodoList = {
 					+"</li>")
 				var result = compiled({TODO:this.newTodoEle.value});
 				this.todoListEle.insertAdjacentHTML("beforeend", result);
-				this.todoListEle.lastChild.dataset.key = requestResult.insertId;
+				if ( navigator.onLine ) {
+					this.todoListEle.lastChild.dataset.key = requestResult.insertId;
+				} else {
+					console.log("offline");
+				}
 				//this.fadeEffect(this.todoListEle.lastChild, 300, 1);
 				this.newTodoEle.value ="";	
 			}.bind(this);

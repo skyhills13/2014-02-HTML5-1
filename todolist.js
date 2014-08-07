@@ -60,8 +60,7 @@ var todoList = {
 	changeHistory : function(e) {	
 		if (e.state) {
 			var method  = e.state.method.caplitalize();
-			console.log(method);
-			console.log("view"+method);
+			console.log("method in popstate : " + method);
 			this["view"+method]();
 		} else {
 			this.viewAll();
@@ -82,10 +81,13 @@ var todoList = {
 		if ( targetTagName == "A") {
 			if (targetHref === "active") {
 				this.viewActive();
+				history.pushState({"method": "active"}, null , "active");
 			} else if ( targetHref === "completed") {
 				this.viewCompleted();
+				history.pushState({"method": "completed"}, null , "completed");
 			} else {
 				this.viewAll();
+				history.pushState({"method": "all"}, null , "index.html");
 			}
 		}
 		e.preventDefault();
@@ -94,20 +96,16 @@ var todoList = {
 	viewAll : function () {
 		this.eTodoList.className = "";
 		this.changeFilterStatus ( 0 );
-		history.pushState({"method": "all"}, null , "index.html");
 	},
 
 	viewActive : function() {
 		this.eTodoList.className = "all-active";
 		this.changeFilterStatus ( 1 );
-		history.pushState({"method": "active"}, null , "active");
-		console.log(history);
 	},
 
 	viewCompleted : function () {
 		this.eTodoList.className = "all-completed";
 		this.changeFilterStatus ( 2 );
-		history.pushState({"method": "completed"}, null , "completed");
 	},
 
 	changeFilterStatus : function(selectedFilterIndex) {

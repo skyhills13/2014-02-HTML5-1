@@ -14,28 +14,40 @@ String.prototype.caplitalize = function() {
 	return this.charAt(0).toUpperCase() + this.slice(1);
 }
 
-var ajax = {
+var Ajax = {
 	xhr : function(requestData, method, url, callback){
-		var request = new XMLHttpRequest();
-		request.open(method, url, true );
-		request.onload = function(){
-			callback(JSON.parse(request.responseText));
+		if(navigator.onLine) {
+			var request = new XMLHttpRequest();
+			request.open(method, url, true );
+			request.onload = function(){
+				callback(JSON.parse(request.responseText));
+			}
+			request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded; charset=utf-8");
+			request.send(requestData);	
+		} else {
+			localStorage.setItem(method, requestData);
+			//data를 클라이언트에 저장 (로컬스토리지나 indexedDb사용)
 		}
-		request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded; charset=utf-8");
-		request.send(requestData);
 	}
-}
+};
 
-var todoList = {
+var TodoList = {
 	ENTER_KEYCODE : 13,
-	eNewTodo : document.getElementById("new-todo"),
-	eTodoList : document.getElementById("todo-list"),
+	newTodoEle : document.getElementById("new-todo"),
+	todoListEle : document.getElementById("todo-list"),
 
-	eFilters : document.getElementById("filters"),
-	eHeader : document.getElementById("header"),
+	filtersEle : document.getElementById("filters"),
+	headerEle : document.getElementById("header"),
 
 	requestUrl : "http://ui.nhnnext.org:3333/skyhills13",
 	currentFilterIndex : 0,
+
+	hrefNIndex : 
+	{
+				"index.html" : 0,
+				"active" : 1,
+				"completed" : 2
+	},
 
 	init : function () {
 		//DomContentLoaded에는 하나만 붙이는거야. 
@@ -48,9 +60,9 @@ var todoList = {
 	},
 
 	addEvents: function(){
-		this.eNewTodo.addEventListener("keydown",this.addToDo.bind(this));
-		this.eTodoList.addEventListener("click", this.changeTodo.bind(this));
-		this.eFilters.addEventListener("click", this.changeFilter.bind(this));
+		this.newTodoEle.addEventListener("keydown",this.addToDo.bind(this));
+		this.todoListEle.addEventListener("click", this.changeTodo.bind(this));
+		this.filtersEle.addEventListener("click", this.changeFilter.bind(this));
 
 		window.addEventListener("online", this.onofflineEvent );
 		window.addEventListener("offline", this.onofflineEvent );
@@ -59,58 +71,53 @@ var todoList = {
 	},
 	changeHistory : function(e) {	
 		if (e.state) {
-			var method  = e.state.method.caplitalize();
-			console.log("method in popstate : " + method);
-			this["view"+method]();
+			var method  = e.state.method;
+			this.changeView(method, this.hrefNIndex[method]);
 		} else {
-			this.viewAll();
+			this.changeView("index.html",0);
 		}
 	},
 
 	onofflineEvent : function(e) {
 		document.getElementById("header").classList[navigator.onLine?"remove":"add"]("offline");
 		//이건 왜 안될까? 답 찾아라 
-		// console.log(this.eHeader);
-		// this.eHeader.classList[navigator.onLine?"remove":"add"]("offline");	
-
+		// console.log(this.headerEle);
+		// this.headerEle.classList[navigator.onLine?"remove":"add"]("offline");	
+		if ( navigator.onLine ) {
+			for(var key in localStorage) {
+				var value = localStorage[key]; 
+				localStorage.clear();
+			}
+		}
 	},
 
 	changeFilter : function(e) {
 		var targetTagName = e.target.tagName.toUpperCase();
 		var targetHref = e.target.getAttribute("href");
 		if ( targetTagName == "A") {
-			if (targetHref === "active") {
-				this.viewActive();
-				history.pushState({"method": "active"}, null , "active");
-			} else if ( targetHref === "completed") {
-				this.viewCompleted();
-				history.pushState({"method": "completed"}, null , "completed");
-			} else {
-				this.viewAll();
-				history.pushState({"method": "all"}, null , "index.html");
+			if ( targetHref ) {
+				this.changeView(targetHref, this.hrefNIndex[targetHref]);
+				history.pushState({ "method": targetHref }, null, targetHref);	
 			}
 		}
 		e.preventDefault();
 	},
 
-	viewAll : function () {
-		this.eTodoList.className = "";
-		this.changeFilterStatus ( 0 );
-	},
-
-	viewActive : function() {
-		this.eTodoList.className = "all-active";
-		this.changeFilterStatus ( 1 );
-	},
-
-	viewCompleted : function () {
-		this.eTodoList.className = "all-completed";
-		this.changeFilterStatus ( 2 );
+	changeView: function( targetHref, targetFilterIndex ) {
+		if (targetHref == "index.html") {
+			this.todoListEle.className = "";
+		}
+		this.todoListEle.className = "all-" + targetHref;
+		this.changeFilterStatus(targetFilterIndex);
 	},
 
 	changeFilterStatus : function(selectedFilterIndex) {
 		var Filters = document.querySelectorAll("#filters a");
 		Filters[this.currentFilterIndex].classList.remove("selected");
+		
+		console.log(selectedFilterIndex);
+		console.log(Filters[selectedFilterIndex]);
+		
 		Filters[selectedFilterIndex].classList.add("selected");
 		this.currentFilterIndex = selectedFilterIndex; 
 	},
@@ -132,15 +139,14 @@ var todoList = {
 					savedList += result;
 				} 
 			}
-			this.eTodoList.insertAdjacentHTML("beforeend", savedList);
+			this.todoListEle.insertAdjacentHTML("beforeend", savedList);
 		}.bind(this);
-		ajax.xhr ( null, "GET", this.requestUrl, callback);
-
+		Ajax.xhr ( null, "GET", this.requestUrl, callback);
 	},
 
 	addToDo : function(e) {
 		if ( e.keyCode == this.ENTER_KEYCODE ) {
-			var requestData = "todo=" + this.eNewTodo.value;
+			var requestData = "todo=" + this.newTodoEle.value;
 			var callback = function(requestResult) {
 				/*javascript로 실행시 li class의 created 지울 것 */
 				var compiled = _.template(
@@ -151,13 +157,13 @@ var todoList = {
 					+ 		"<button class=\"destroy\"></button>"
 					+	"</div>"
 					+"</li>")
-				var result = compiled({TODO:this.eNewTodo.value});
-				this.eTodoList.insertAdjacentHTML("beforeend", result);
-				this.eTodoList.lastChild.dataset.key = requestResult.insertId;
-				//this.fadeEffect(this.eTodoList.lastChild, 300, 1);
-				this.eNewTodo.value ="";	
+				var result = compiled({TODO:this.newTodoEle.value});
+				this.todoListEle.insertAdjacentHTML("beforeend", result);
+				this.todoListEle.lastChild.dataset.key = requestResult.insertId;
+				//this.fadeEffect(this.todoListEle.lastChild, 300, 1);
+				this.newTodoEle.value ="";	
 			}.bind(this);
-			ajax.xhr(requestData, "PUT", this.requestUrl, callback.bind(this));
+			Ajax.xhr(requestData, "PUT", this.requestUrl, callback.bind(this));
 		}
 	},
 
@@ -189,7 +195,7 @@ var todoList = {
 			};
 			eLi.addEventListener("webkitAnimationEnd", removeElement ,false);
 			};
-		ajax.xhr(null, "DELETE", this.requestUrl+"/"+param.key, callback);
+		Ajax.xhr(null, "DELETE", this.requestUrl+"/"+param.key, callback);
 	},
 
 	checkTodo : function(eLi, param, completed) {
@@ -201,7 +207,7 @@ var todoList = {
 			}
 		};
 		var requestData = "completed=" + param.completed;
-		ajax.xhr(requestData, "POST", this.requestUrl+"/"+param.key, callback);	
+		Ajax.xhr(requestData, "POST", this.requestUrl+"/"+param.key, callback);	
 	},
 
 	fadeEffect : function(element, totalTime, direction){
@@ -223,6 +229,6 @@ var todoList = {
 			element.parentNode.removeChild(element);
 		}), interval);	
 	}
-}
+};
 
-todoList.init();
+TodoList.init();

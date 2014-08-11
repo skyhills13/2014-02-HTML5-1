@@ -15,6 +15,7 @@ String.prototype.caplitalize = function() {
 }
 
 var Ajax = {
+	localStorageIndex : 0,
 	xhr : function(requestData, method, url, callback){
 		if(navigator.onLine) {
 			var request = new XMLHttpRequest();
@@ -27,17 +28,18 @@ var Ajax = {
 		} else {
 			//data를 클라이언트에 저장 (로컬스토리지나 indexedDb사용)
 			//NULL일때는 load할때나 delete할때. 
-			if (requestData === null) {
-				localStorage.setItem(method, method+","+url);
-			} else {
-				localStorage.setItem(requestData, method+","+url);
-			}
+		
+			localStorage.setItem(this.localStorageIndex, JSON.stringify(
+																			{"method" : method,
+																			"url" : url,
+																			"requestData" : requestData}
+																			));
+			++this.localStorageIndex;
 			callback();
 		}
 	}
 };
-//db에 넣을 것을 로컬에 저장
-//
+
 var TodoList = {
 	ENTER_KEYCODE : 13,
 	newTodoEle : document.getElementById("new-todo"),
@@ -91,21 +93,26 @@ var TodoList = {
 		// console.log(this.headerEle);
 		// this.headerEle.classList[navigator.onLine?"remove":"add"]("offline");	
 		if ( navigator.onLine ) {
-			//서버로 싱크 맞추기 
-			var keys = Object.keys(localStorage);
-			for(var key in localStorage) {
-				var value = localStorage[key];
-				var methodNurl = value.split(",");
-				if (key === "DELETE") {
-					key = null;
+			var ArrayIndex = 0; 
+			var localStorageArray = [];
+			var previousKey = null;
+			for( var i = 0; i < Ajax.localStorageIndex ; ++i) {
+				var localStorageValue = JSON.parse(localStorage[i]);
+				var method = localStorageValue.method;
+				var url = localStorageValue.url;
+				//이거 제대로 안됨. 동시에 할때. 고칠것 
+				if(url.indexOf(previousKey) != -1) {
+					url.replace(previousKey, this.todoListEle.lastChild.dataset.key);
+					console.log(url);
 				}
-				console.log(methodNurl);
-				Ajax.xhr(key, methodNurl[0], methodNurl[1], function(requestResult){
-					if ( methodNurl[0] === "PUT") {
+				var requestData = localStorageValue.requestData;
+				Ajax.xhr(requestData, method, url, function(requestResult){
+					if ( method === "PUT") {
+						previousKey = this.todoListEle.lastChild.dataset.key;
 						this.todoListEle.lastChild.dataset.key = requestResult.insertId;
-					} else if (methodNurl[0] === "POST") {
+					} else if ( method === "POST") {
 						console.log("check sync");
-					} else if ( methodNurl[0] === "DELETE") {
+					} else if ( method === "DELETE") {
 						console.log("delete sync");
 					}
 				}.bind(this));
@@ -143,6 +150,8 @@ var TodoList = {
 	},
 
 	loadTodo : function(){
+		localStorage.clear(); //load도 offline sync 구현시 이 라인은 삭제할 것 
+		//삭제 후, 적당한 시기에 clear할 것.
 		var savedList ="";
 		var callback = function(requestResult){
 			for(var i = 0; i < requestResult.length ; ++i) {
@@ -184,7 +193,7 @@ var TodoList = {
 				if ( navigator.onLine ) {
 					this.todoListEle.lastChild.dataset.key = requestResult.insertId;
 				} else {
-					console.log("offline");
+					this.todoListEle.lastChild.dataset.key = Math.floor((Math.random()*500000 ) + 400000);
 				}
 				//this.fadeEffect(this.todoListEle.lastChild, 300, 1);
 				this.newTodoEle.value ="";	

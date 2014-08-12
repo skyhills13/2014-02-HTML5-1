@@ -26,14 +26,12 @@ var Ajax = {
 			request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded; charset=utf-8");
 			request.send(requestData);
 		} else {
-			//data를 클라이언트에 저장 (로컬스토리지나 indexedDb사용)
-			//NULL일때는 load할때나 delete할때. 
-		
 			localStorage.setItem(this.localStorageIndex, JSON.stringify(
 																			{"method" : method,
 																			"url" : url,
 																			"requestData" : requestData}
 																			));
+			console.log("url in the Ajax object : " + url);
 			++this.localStorageIndex;
 			callback();
 		}
@@ -97,24 +95,29 @@ var TodoList = {
 			var localStorageArray = [];
 			var previousKey = null;
 			for( var i = 0; i < Ajax.localStorageIndex ; ++i) {
+				console.log("i가 뭔지 알려줄게 : " + i);
 				var localStorageValue = JSON.parse(localStorage[i]);
 				var method = localStorageValue.method;
 				var url = localStorageValue.url;
-				//이거 제대로 안됨. 동시에 할때. 고칠것 
-				if(url.indexOf(previousKey) != -1) {
-					url.replace(previousKey, this.todoListEle.lastChild.dataset.key);
-					console.log(url);
-				}
+				console.log("localStorageValue method i가 뭐게 : " + method);
+				console.log("localStorageValue url i가 뭐게 : " + url);
+				console.log("1=========");
+				console.log("previousKey : " + previousKey);
+				console.log("this.todoListEle.lastChild.dataset.key : " + this.todoListEle.lastChild.dataset.key);
+				console.log("2=========");
+				 if(url.indexOf(previousKey) != -1) {
+				 	url.replace(previousKey, this.todoListEle.lastChild.dataset.key);
+				 }
+				console.log("3=========");
+				console.log("###############");
+
 				var requestData = localStorageValue.requestData;
 				Ajax.xhr(requestData, method, url, function(requestResult){
-					if ( method === "PUT") {
-						previousKey = this.todoListEle.lastChild.dataset.key;
-						this.todoListEle.lastChild.dataset.key = requestResult.insertId;
-					} else if ( method === "POST") {
-						console.log("check sync");
-					} else if ( method === "DELETE") {
-						console.log("delete sync");
-					}
+					console.log("method가 뭔지 알려줄게 : " + method);
+					previousKey = this.todoListEle.lastChild.dataset.key;
+					console.log("previousKey : " +previousKey);
+					this.todoListEle.lastChild.dataset.key = requestResult.insertId;
+					console.log("this.todoListEle.lastChild.dataset.key : " + this.todoListEle.lastChild.dataset.key);
 				}.bind(this));
 			}
 			localStorage.clear();
@@ -229,7 +232,8 @@ var TodoList = {
 				eLi.parentNode.removeChild(eLi);
 			};
 			eLi.addEventListener("webkitAnimationEnd", removeElement ,false);
-			};
+		};
+		console.log("param.key : " + param.key);
 		Ajax.xhr(null, "DELETE", this.requestUrl+"/"+param.key, callback);
 	},
 

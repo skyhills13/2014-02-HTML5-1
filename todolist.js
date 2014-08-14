@@ -1,15 +1,6 @@
-/*
-# 네번째
-1. 온라인 / 오프라인
-	- 오프라인일 때 localStorage에 저장하기.
-	- 온라인일 때 서버에 싱크 맞추기.
+//foreach와 map의 차이를 공부하고 map을 사용한 개선
 
-# 다섯번째
-1. 뒤로 가기.
-	- pushState활용하기.
-2. 등록,삭제할 때 애니메이션 입히기
-	- CSS3활용
-*/
+
 String.prototype.caplitalize = function() {
 	return this.charAt(0).toUpperCase() + this.slice(1);
 }
@@ -189,12 +180,8 @@ var TodoList = {
 					+	"</div>"
 					+"</li>")
 				var result = compiled({TODO:this.newTodoEle.value});
-				this.todoListEle.insertAdjacentHTML("beforeend", result);
-				if ( navigator.onLine ) {
-					this.todoListEle.lastChild.dataset.key = requestResult.insertId;
-				} else {
-					this.todoListEle.lastChild.dataset.key = Math.floor((Math.random()*500000 ) + 400000);
-				}
+				this.todoListEle.insertAdjacentHTML("afterbegin", result);
+				this.todoListEle.lastChild.dataset.key = navigator.onLine ? requestResult.inserId : Math.floor((Math.random()*500000 ) + 400000);
 				//this.fadeEffect(this.todoListEle.lastChild, 300, 1);
 				this.newTodoEle.value ="";	
 			}.bind(this);

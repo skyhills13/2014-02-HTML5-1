@@ -18,10 +18,12 @@ var Ajax = {
 	localStorageIndex : 0,
 	xhr : function(requestData, method, url, callback){
 		if(navigator.onLine) {
+			// console.log("xhr안에 있는 method : " + method);
+			// console.log("xhr안에 있는 url : " + url);
 			var request = new XMLHttpRequest();
 			request.open(method, url, true );
 			request.onload = function(){
-				callback(JSON.parse(request.responseText));
+				callback(JSON.parse(request.responseText), method);
 			}
 			request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded; charset=utf-8");
 			request.send(requestData);
@@ -93,31 +95,26 @@ var TodoList = {
 		if ( navigator.onLine ) {
 			var ArrayIndex = 0; 
 			var localStorageArray = [];
-			var previousKey = null;
+			var randomKeyNrealKey = {};
 			for( var i = 0; i < Ajax.localStorageIndex ; ++i) {
 				console.log("i가 뭔지 알려줄게 : " + i);
 				var localStorageValue = JSON.parse(localStorage[i]);
 				var method = localStorageValue.method;
 				var url = localStorageValue.url;
-				console.log("localStorageValue method i가 뭐게 : " + method);
-				console.log("localStorageValue url i가 뭐게 : " + url);
-				console.log("1=========");
-				console.log("previousKey : " + previousKey);
-				console.log("this.todoListEle.lastChild.dataset.key : " + this.todoListEle.lastChild.dataset.key);
-				console.log("2=========");
-				 if(url.indexOf(previousKey) != -1) {
-				 	url.replace(previousKey, this.todoListEle.lastChild.dataset.key);
-				 }
-				console.log("3=========");
-				console.log("###############");
-
+				for( randomKey in randomKeyNrealKey) {
+					if (url.indexOf(randomKey) != -1 ) {
+						url.replace(randomKey, randomKeyNrealKey[randomKey]);
+					}
+				}
 				var requestData = localStorageValue.requestData;
-				Ajax.xhr(requestData, method, url, function(requestResult){
-					console.log("method가 뭔지 알려줄게 : " + method);
-					previousKey = this.todoListEle.lastChild.dataset.key;
-					console.log("previousKey : " +previousKey);
-					this.todoListEle.lastChild.dataset.key = requestResult.insertId;
-					console.log("this.todoListEle.lastChild.dataset.key : " + this.todoListEle.lastChild.dataset.key);
+				Ajax.xhr(requestData, method, url, function(requestResult, method){
+					console.log("method :" , method);
+					if ( method === "PUT") {
+						//put일 경우, 랜덤으로 생성해서 넣어두었던 dataset key를 previous key에 저장하고,
+						randomKeyNrealKey[this.todoListEle.lastChild.dataset.key] = requestResult.insertId;
+						//requestResult로 받은 값중에 id를 dataset key에다가 다시 넣고, 
+						this.todoListEle.lastChild.dataset.key = requestResult.insertId;
+					}
 				}.bind(this));
 			}
 			localStorage.clear();
